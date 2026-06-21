@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#185FA5"/>
+<title>Workout Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#185FA5;--blue-light:#E6F1FB;--blue-dark:#0C447C;
+  --green:#1D9E75;--green-light:#E1F5EE;--green-mid:#9FE1CB;
+  --red:#A32D2D;--red-light:#FCEBEB;
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#e8e8e8;
+  --text:#111;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:12px;--radius-sm:8px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a1a;--bg2:#252525;--bg3:#303030;
+  --text:#f0f0f0;--text2:#aaa;--text3:#666;
+  --border:#333;--blue-light:#0a2a45;--green-light:#0a2a1e;--red-light:#2a0a0a;
+}}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+#app{display:flex;flex-direction:column;height:100%}
+.top-bar{background:var(--blue);color:#fff;padding:12px 16px 10px;flex-shrink:0}
+.top-bar h1{font-size:17px;font-weight:600;margin-bottom:1px}
+.top-bar .sub{font-size:12px;opacity:.8}
+.tab-bar{display:flex;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 6px;cursor:pointer;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:inherit;gap:3px}
+.tab-item.active{color:var(--blue)}
+.tab-item svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;background:var(--bg2)}
+.section{display:none}.section.active{display:block}
+.card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden}
+.card-header{display:flex;align-items:center;padding:13px 14px;gap:10px;cursor:pointer;user-select:none}
+.card-header .name{flex:1;font-weight:600;font-size:14px}
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600}
+.badge.bw{background:var(--green-light);color:var(--green)}
+.badge.gym{background:var(--blue-light);color:var(--blue)}
+.muscle-tag{font-size:11px;color:var(--text3)}
+.icon-btn{width:36px;height:36px;border:none;background:transparent;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.icon-btn:active{background:var(--bg2)}
+.icon-btn.danger:active{color:var(--red);background:var(--red-light)}
+.sets-area{padding:0 14px 12px;border-top:1px solid var(--border)}
+.sets-th{display:flex;padding:8px 0 5px;font-size:11px;color:var(--text3);font-weight:600}
+.set-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.set-num{width:22px;font-size:12px;color:var(--text3);text-align:center}
+.set-inp{padding:7px;border:1px solid var(--border);border-radius:8px;font-size:14px;text-align:center;background:var(--bg);color:var(--text);flex:1;min-width:0}
+.set-inp:focus{outline:none;border-color:var(--blue)}
+.set-x{font-size:12px;color:var(--text3);flex-shrink:0}
+.add-set-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);border:none;background:transparent;cursor:pointer;padding:8px 0;font-family:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit}
+.btn:active{opacity:.7}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.block{width:100%;margin-bottom:10px}
+.btn.sm{padding:8px 14px;font-size:13px}
+.progress-bar{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:5px 0 0}
+.progress-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s}
+
+/* TODAY - 2 phase */
+.phase-header{background:var(--bg);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--border)}
+.phase-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.phase-title{font-size:16px;font-weight:700;margin-bottom:2px}
+.phase-sub{font-size:13px;color:var(--text2)}
+
+/* Select phase */
+.select-ex-item{display:flex;align-items:center;padding:13px 14px;gap:12px;cursor:pointer;user-select:none}
+.select-ex-item:not(:last-child){border-bottom:1px solid var(--border)}
+.sel-box{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg);transition:all .15s}
+.sel-box.checked{background:var(--blue);border-color:var(--blue)}
+.sel-box svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none}
+.sel-box.checked svg{display:block}
+.sel-info{flex:1}
+.sel-name{font-size:14px;font-weight:500}
+.sel-sub{font-size:12px;color:var(--text3);margin-top:1px}
+
+/* Workout phase */
+.check-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.check-item:last-child{border-bottom:none}
+.check-box{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg);transition:all .15s}
+.check-box.checked{background:var(--green);border-color:var(--green)}
+.check-box svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none}
+.check-box.checked svg{display:block}
+.check-label{flex:1}
+.cl-name{font-size:14px;font-weight:500;transition:color .15s}
+.cl-name.done{text-decoration:line-through;color:var(--text3)}
+.cl-sub{font-size:12px;color:var(--text3);margin-top:1px}
+
+/* Cal */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav h3{font-size:15px;font-weight:600}
+.cal-btns{display:flex;gap:8px}
+.cal-btn{width:36px;height:36px;border:1px solid var(--border);background:var(--bg);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.cal-btn:active{background:var(--bg3)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
+.day-col{text-align:center}
+.day-lbl{font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px}
+.day-cell{border-radius:10px;border:1px solid var(--border);background:var(--bg);cursor:pointer;padding:7px 2px;min-height:56px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.day-cell.today{border-color:var(--blue);background:var(--blue-light)}
+.day-cell.selected{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
+.day-cell .dn{font-size:12px;font-weight:600}
+.day-cell.today .dn{color:var(--blue-dark)}
+.dots{display:flex;flex-wrap:wrap;gap:2px;justify-content:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.day-detail{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);padding:14px}
+.day-detail h4{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.detail-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.detail-item:last-child{border-bottom:none}
+.detail-item .di-name{flex:1;font-size:13px}
+.detail-item .di-sets{font-size:11px;color:var(--text3)}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat-card{background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);padding:12px;text-align:center}
+.stat-card .sv{font-size:22px;font-weight:700}
+.stat-card .sl{font-size:11px;color:var(--text3);margin-top:2px}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.month-cell{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent}
+.month-cell.empty{background:transparent;cursor:default}
+.month-cell.rest{background:var(--bg);border-color:var(--border);color:var(--text3)}
+.month-cell.workout{background:var(--green-mid);color:#085041}
+.month-cell.full{background:var(--green);color:#fff}
+.month-cell.today{border-color:var(--blue)!important;border-width:2px}
+.form-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);padding:14px;margin-bottom:12px}
+.form-card h4{font-size:14px;font-weight:600;margin-bottom:12px}
+.inp{display:block;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;margin-bottom:10px}
+.inp:focus{outline:none;border-color:var(--blue)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.edit-form{background:var(--bg2);padding:12px;border-top:1px solid var(--border)}
+.edit-form .inp{margin-bottom:8px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+.empty-state svg{width:48px;height:48px;margin:0 auto 12px;display:block;opacity:.4}
+.divider{font-size:11px;font-weight:600;color:var(--text3);padding:4px 0 8px;text-transform:uppercase;letter-spacing:.5px}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 18px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:999;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+#toast.err{background:var(--red)}
+.setup-screen{display:flex;flex-direction:column;justify-content:center;min-height:100%;padding:24px;gap:10px}
+.setup-screen h2{font-size:18px;margin-bottom:2px}
+.setup-screen p{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:6px}
+.err-box{background:var(--red-light);color:var(--red);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;line-height:1.5;word-break:break-word;margin-bottom:4px}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3);font-size:13px}
+.spinner{width:28px;height:28px;border:3px solid var(--bg3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top-bar">
+    <h1>🏋️ Workout Tracker</h1>
+    <div class="sub" id="top-sub"></div>
+  </div>
+  <div class="content" id="main-content">
+    <div id="sec-loading" class="loading-screen" style="display:none">
+      <div class="spinner"></div>
+      <div id="loading-text">Đang tải dữ liệu...</div>
+    </div>
+    <div id="sec-setup" class="setup-screen" style="display:none"></div>
+    <div class="section active" id="sec-exercises"></div>
+    <div class="section" id="sec-today"></div>
+    <div class="section" id="sec-week"></div>
+    <div class="section" id="sec-month"></div>
+  </div>
+  <div class="tab-bar" id="main-tabbar">
+    <button class="tab-item active" onclick="switchTab('exercises')" id="tab-exercises">
+      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
+      Bài tập
+    </button>
+    <button class="tab-item" onclick="switchTab('today')" id="tab-today">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+      Hôm nay
+    </button>
+    <button class="tab-item" onclick="switchTab('week')" id="tab-week">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Tuần
+    </button>
+    <button class="tab-item" onclick="switchTab('month')" id="tab-month">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+      Tháng
+    </button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const VN_DAYS=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+const VN_MONTHS=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const DEFAULT_EX=[
+  // ===== CALISTHENICS — Buổi A (Lưng rộng + Ngực dưới + Đùi trước) =====
+  {id:1,name:'Wide-grip Pull-ups',type:'bodyweight',muscle:'Lưng',sets:[{reps:6,weight:0},{reps:8,weight:0},{reps:10,weight:0}]},
+  {id:2,name:'Dips (Xà kép)',type:'bodyweight',muscle:'Ngực',sets:[{reps:8,weight:0},{reps:10,weight:0},{reps:12,weight:0}]},
+  {id:3,name:'Regular Push-ups',type:'bodyweight',muscle:'Ngực',sets:[{reps:12,weight:0},{reps:14,weight:0},{reps:15,weight:0}]},
+  {id:4,name:'Bulgarian Split Squat (Bodyweight)',type:'bodyweight',muscle:'Chân',sets:[{reps:10,weight:0},{reps:11,weight:0},{reps:12,weight:0}]},
+  {id:5,name:'Hanging Knee Raises',type:'bodyweight',muscle:'Bụng',sets:[{reps:10,weight:0},{reps:12,weight:0},{reps:15,weight:0}]},
+
+  // ===== CALISTHENICS — Buổi B (Lưng dày + Ngực trên/Tay sau + Vai) =====
+  {id:6,name:'Chin-ups',type:'bodyweight',muscle:'Lưng',sets:[{reps:6,weight:0},{reps:8,weight:0},{reps:10,weight:0}]},
+  {id:7,name:'Pike Push-ups',type:'bodyweight',muscle:'Vai',sets:[{reps:6,weight:0},{reps:8,weight:0},{reps:10,weight:0}]},
+  {id:8,name:'Australian Pull-ups',type:'bodyweight',muscle:'Lưng',sets:[{reps:10,weight:0},{reps:11,weight:0},{reps:12,weight:0}]},
+  {id:9,name:'Decline Push-ups (Chân cao)',type:'bodyweight',muscle:'Ngực',sets:[{reps:12,weight:0},{reps:14,weight:0},{reps:15,weight:0}]},
+  {id:10,name:'Shoulder Taps (giây)',type:'bodyweight',muscle:'Bụng',sets:[{reps:45,weight:0},{reps:50,weight:0},{reps:60,weight:0}]},
+
+  // ===== GYM — Thứ 2: Buổi A (Full Body) =====
+  {id:11,name:'Barbell Squat',type:'gym',muscle:'Chân',sets:[{reps:6,weight:40},{reps:7,weight:40},{reps:8,weight:40}]},
+  {id:12,name:'Incline Dumbbell Press',type:'gym',muscle:'Ngực',sets:[{reps:8,weight:14},{reps:9,weight:14},{reps:10,weight:14}]},
+  {id:13,name:'Lat Pulldown',type:'gym',muscle:'Lưng',sets:[{reps:8,weight:30},{reps:10,weight:30},{reps:12,weight:30}]},
+  {id:14,name:'Lying Leg Curl',type:'gym',muscle:'Chân',sets:[{reps:10,weight:20},{reps:11,weight:20},{reps:12,weight:20}]},
+  {id:15,name:'Dumbbell Lateral Raise',type:'gym',muscle:'Vai',sets:[{reps:12,weight:6},{reps:13,weight:6},{reps:15,weight:6}]},
+  {id:16,name:'Hanging Leg Raise (max reps)',type:'gym',muscle:'Bụng',sets:[{reps:10,weight:0},{reps:10,weight:0},{reps:10,weight:0}]},
+
+  // ===== GYM — Thứ 4: Buổi B =====
+  {id:17,name:'Flat Bench Press',type:'gym',muscle:'Ngực',sets:[{reps:6,weight:40},{reps:7,weight:40},{reps:8,weight:40}]},
+  {id:18,name:'Seated Cable Row',type:'gym',muscle:'Lưng',sets:[{reps:8,weight:30},{reps:9,weight:30},{reps:10,weight:30}]},
+  {id:19,name:'Leg Press',type:'gym',muscle:'Chân',sets:[{reps:10,weight:60},{reps:11,weight:60},{reps:12,weight:60}]},
+  {id:20,name:'Overhead Press',type:'gym',muscle:'Vai',sets:[{reps:8,weight:20},{reps:9,weight:20},{reps:10,weight:20}]},
+  {id:21,name:'Bicep Curl + Tricep Pushdown (Superset)',type:'gym',muscle:'Tay',sets:[{reps:12,weight:10},{reps:12,weight:10},{reps:12,weight:10}]},
+  {id:22,name:'Plank (giữ hết sức)',type:'gym',muscle:'Bụng',sets:[{reps:30,weight:0},{reps:40,weight:0},{reps:50,weight:0}]},
+
+  // ===== GYM — Thứ 6: Buổi C =====
+  {id:23,name:'Bulgarian Split Squat (Tạ đơn)',type:'gym',muscle:'Chân',sets:[{reps:10,weight:10},{reps:10,weight:10},{reps:10,weight:10}]},
+  {id:24,name:'Chest Fly',type:'gym',muscle:'Ngực',sets:[{reps:12,weight:10},{reps:12,weight:10},{reps:12,weight:10}]},
+  {id:25,name:'Chest-Supported Row',type:'gym',muscle:'Lưng',sets:[{reps:10,weight:20},{reps:10,weight:20},{reps:10,weight:20}]},
+  {id:26,name:'Face Pull',type:'gym',muscle:'Vai',sets:[{reps:15,weight:10},{reps:15,weight:10},{reps:15,weight:10},{reps:15,weight:10}]},
+  {id:27,name:'Leg Extension',type:'gym',muscle:'Chân',sets:[{reps:12,weight:20},{reps:13,weight:20},{reps:15,weight:20}]},
+  {id:28,name:'Calf Raises',type:'gym',muscle:'Chân',sets:[{reps:15,weight:20},{reps:15,weight:20},{reps:15,weight:20}]},
+];
+
+// logs[dateKey] = { selectedIds: [1,2,3], setChecks: { exId: { setIdx: bool } } }
+let state={
+  exercises:[],logs:{},
+  filterType:'all',weekOffset:0,monthOffset:0,
+  selectedDay:null,editingId:null,expandedIds:new Set(),
+  nextId:29,showAddForm:false,activeTab:'exercises'
+};
+
+// ===== SUPABASE CONFIG =====
+const CFG_KEY='wt2_supabase_cfg';
+let SB_URL=null, SB_KEY=null;
+
+function loadCfg(){
+  try{
+    const raw=localStorage.getItem(CFG_KEY);
+    if(raw){const c=JSON.parse(raw);SB_URL=c.url;SB_KEY=c.key;}
+  }catch(e){}
+}
+function normalizeUrl(raw){
+  let u=raw.trim();
+  if(!/^https?:\/\//i.test(u))u='https://'+u; // tự thêm https:// nếu thiếu
+  u=u.replace(/\/+$/,''); // bỏ dấu / cuối
+  u=u.replace(/\/rest\/v1.*$/i,''); // bỏ nếu người dùng lỡ paste cả /rest/v1/...
+  return u;
+}
+function saveCfg(url,key){
+  SB_URL=normalizeUrl(url);SB_KEY=key.trim();
+  try{localStorage.setItem(CFG_KEY,JSON.stringify({url:SB_URL,key:SB_KEY}));}catch(e){}
+}
+function clearCfg(){
+  SB_URL=null;SB_KEY=null;
+  try{localStorage.removeItem(CFG_KEY);}catch(e){}
+}
+
+// Gọi 1 request và trả về {ok, status, data, errText}
+async function sbRequest(path,opts={}){
+  let res;
+  try{
+    res=await fetch(`${SB_URL}${path}`,{
+      ...opts,
+      headers:{
+        apikey:SB_KEY,
+        Authorization:`Bearer ${SB_KEY}`,
+        'Content-Type':'application/json',
+        ...(opts.headers||{})
+      }
+    });
+  }catch(networkErr){
+    // Lỗi này xảy ra khi: sai URL hẳn (DNS), không có mạng, hoặc CORS/mixed-content
+    // (ví dụ mở file bằng file:// trên một số trình duyệt)
+    throw new Error('NETWORK: '+(networkErr.message||'fetch thất bại'));
+  }
+  let body=null;
+  try{body=await res.json();}catch(e){/* có thể rỗng */}
+  if(!res.ok){
+    const msg=(body&&(body.message||body.hint||body.error))||res.statusText||'Lỗi không rõ';
+    throw new Error(`HTTP_${res.status}: ${msg}`);
+  }
+  return body;
+}
+
+async function sbGet(key){
+  const rows=await sbRequest(`/rest/v1/app_data?key=eq.${encodeURIComponent(key)}&select=value`,{method:'GET'});
+  return (rows&&rows.length)?rows[0].value:null;
+}
+async function sbSet(key,value){
+  await sbRequest('/rest/v1/app_data',{
+    method:'POST',
+    headers:{Prefer:'resolution=merge-duplicates'},
+    body:JSON.stringify({key,value,updated_at:new Date().toISOString()})
+  });
+}
+async function sbTestConnection(){
+  // Request nhẹ nhất để xác nhận: URL đúng + key đúng + bảng app_data tồn tại + policy cho phép đọc
+  await sbRequest('/rest/v1/app_data?select=key&limit=1',{method:'GET'});
+}
+
+function friendlyError(raw){
+  const msg=raw.message||String(raw);
+  if(msg.startsWith('NETWORK:')){
+    return 'Không gửi được request tới Supabase. Kiểm tra: (1) URL đúng chưa, dạng https://xxxxx.supabase.co, (2) điện thoại có mạng, (3) bạn đang mở file qua link https:// (không phải mở file local trực tiếp).';
+  }
+  if(msg.startsWith('HTTP_401')||msg.startsWith('HTTP_403')){
+    return 'Bị từ chối quyền truy cập (401/403). Kiểm tra lại anon public key đã copy đúng chưa, và đã chạy SQL tạo policy "allow all for anon" chưa.';
+  }
+  if(msg.includes('relation') && msg.includes('does not exist')){
+    return 'Chưa có bảng app_data trong database. Vào Supabase → SQL Editor → chạy lại file setup.sql.';
+  }
+  if(msg.startsWith('HTTP_404')){
+    return 'Không tìm thấy endpoint (404). Kiểm tra lại URL Project có đúng không (không phải URL của trang dashboard).';
+  }
+  return 'Lỗi: '+msg;
+}
+
+function showSetupScreen(prefillErr){
+  document.getElementById('sec-loading').style.display='none';
+  document.getElementById('main-tabbar').style.display='none';
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('sec-setup');
+  el.style.display='flex';
+  el.innerHTML=`
+    <h2>🔌 Kết nối Supabase</h2>
+    <p>Nhập Project URL và anon public key (Supabase → Project Settings → API). App sẽ test kết nối trước khi vào.</p>
+    ${prefillErr?`<div class="err-box">⚠️ ${prefillErr}</div>`:''}
+    <input class="inp" id="cfg-url" placeholder="https://xxxxx.supabase.co" value="${SB_URL||''}" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+    <input class="inp" id="cfg-key" placeholder="anon public key (eyJ...)" value="${SB_KEY||''}" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+    <button class="btn primary block" id="cfg-submit-btn" onclick="submitCfg()">Kết nối</button>
+  `;
+}
+async function submitCfg(){
+  const urlRaw=document.getElementById('cfg-url').value;
+  const keyRaw=document.getElementById('cfg-key').value;
+  if(!urlRaw.trim()||!keyRaw.trim()){showToast('⚠️ Điền đủ URL và key',true);return;}
+  const btn=document.getElementById('cfg-submit-btn');
+  btn.disabled=true;btn.textContent='Đang kiểm tra...';
+  saveCfg(urlRaw,keyRaw);
+  try{
+    await sbTestConnection();
+    await init();
+  }catch(e){
+    console.error(e);
+    showSetupScreen(friendlyError(e));
+  }
+}
+
+function showLoading(text){
+  document.getElementById('sec-setup').style.display='none';
+  document.getElementById('main-tabbar').style.display='flex';
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-loading').style.display='flex';
+  document.getElementById('loading-text').textContent=text||'Đang tải dữ liệu...';
+}
+function hideLoading(){
+  document.getElementById('sec-loading').style.display='none';
+  document.getElementById('main-tabbar').style.display='flex';
+  document.getElementById('sec-'+state.activeTab).classList.add('active');
+}
+
+async function save(){
+  try{
+    await Promise.all([
+      sbSet('exercises',state.exercises),
+      sbSet('logs',state.logs),
+      sbSet('nextId',state.nextId)
+    ]);
+    showToast('✓ Đã lưu');
+  }catch(e){
+    console.error(e);
+    showToast('✗ Lỗi lưu: '+friendlyError(e),true);
+  }
+}
+async function load(){
+  const [ex,lg,nid]=await Promise.all([
+    sbGet('exercises'),
+    sbGet('logs'),
+    sbGet('nextId')
+  ]);
+  state.exercises=ex!==null?ex:JSON.parse(JSON.stringify(DEFAULT_EX));
+  state.logs=lg!==null?lg:{};
+  state.nextId=nid!==null?nid:29;
+  if(ex===null){
+    await save(); // lần đầu trên project này — seed dữ liệu mặc định
+  }
+}
+
+async function init(){
+  if(!SB_URL||!SB_KEY){showSetupScreen();return;}
+  showLoading('Đang kiểm tra kết nối...');
+  try{
+    await sbTestConnection();
+    showLoading('Đang tải dữ liệu...');
+    await load();
+    hideLoading();
+    render();
+  }catch(e){
+    console.error(e);
+    showSetupScreen(friendlyError(e));
+  }
+}
+let toastTimer;
+function showToast(msg,isErr){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.toggle('err',!!isErr);t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),isErr?3200:1600);
+}
+function dateKey(d){return d.toISOString().slice(0,10)}
+function todayKey(){return dateKey(new Date())}
+function getLog(k){
+  if(!state.logs[k])state.logs[k]={selectedIds:null,setChecks:{}};
+  // migrate old format
+  if(state.logs[k].exerciseChecks && !state.logs[k].setChecks){
+    state.logs[k].setChecks=state.logs[k].exerciseChecks;
+    delete state.logs[k].exerciseChecks;
+  }
+  return state.logs[k];
+}
+const svgCheck=()=>`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+const svgRight=()=>`<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`;
+const svgDown=()=>`<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`;
+const svgEdit=()=>`<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const svgTrash=()=>`<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+const svgPlus=()=>`<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+const svgX=()=>`<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+function switchTab(t){
+  state.activeTab=t;
+  document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.getElementById('main-content').scrollTop=0;
+  render();
+}
+function render(){
+  updateTopBar();
+  const t=state.activeTab;
+  if(t==='exercises')renderExercises();
+  if(t==='today')renderToday();
+  if(t==='week')renderWeek();
+  if(t==='month')renderMonth();
+}
+function updateTopBar(){
+  const d=new Date();
+  const log=getLog(todayKey());
+  let sub=`${VN_DAYS[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  if(log.selectedIds){
+    const sel=log.selectedIds;
+    const done=sel.filter(id=>{
+      const ex=state.exercises.find(e=>e.id===id);
+      if(!ex)return false;
+      const sc=log.setChecks[id]||{};
+      return ex.sets.every((_,i)=>sc[i]);
+    }).length;
+    sub=`Hôm nay: ${done}/${sel.length} bài ✅`;
+  }
+  document.getElementById('top-sub').textContent=sub;
+}
+
+/* ===== EXERCISES TAB ===== */
+function renderExercises(){
+  const filtered=state.filterType==='all'?state.exercises:state.exercises.filter(e=>e.type===state.filterType);
+  let html=`<div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="btn${state.filterType==='all'?' primary':''} sm" style="flex:1" onclick="setFilter('all')">Tất cả</button>
+    <button class="btn${state.filterType==='bodyweight'?' primary':''} sm" style="flex:1" onclick="setFilter('bodyweight')">BW</button>
+    <button class="btn${state.filterType==='gym'?' primary':''} sm" style="flex:1" onclick="setFilter('gym')">Gym</button>
+  </div>`;
+  if(state.showAddForm){
+    html+=`<div class="form-card"><h4>${svgPlus()} Thêm bài tập mới</h4>
+      <input class="inp" id="new-name" placeholder="Tên bài tập..."/>
+      <div class="row2">
+        <select class="inp" id="new-type" style="margin:0"><option value="bodyweight">Body Weight</option><option value="gym">Gym</option></select>
+        <select class="inp" id="new-muscle" style="margin:0"><option>Ngực</option><option>Lưng</option><option>Vai</option><option>Tay</option><option>Chân</option><option>Bụng</option><option>Toàn thân</option></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:2px">
+        <button class="btn primary" style="flex:1" onclick="addExercise()">Lưu</button>
+        <button class="btn" style="flex:1" onclick="state.showAddForm=false;render()">Huỷ</button>
+      </div></div>`;
+  }
+  if(!filtered.length){
+    html+=`<div class="empty-state"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/></svg>Chưa có bài tập nào</div>`;
+  } else {
+    filtered.forEach(ex=>{
+      const expanded=state.expandedIds.has(ex.id);
+      const editing=state.editingId===ex.id;
+      html+=`<div class="card">`;
+      if(editing){
+        html+=`<div class="edit-form">
+          <input class="inp" id="ed-name-${ex.id}" value="${ex.name}"/>
+          <div class="row2">
+            <select class="inp" id="ed-type-${ex.id}" style="margin:0">
+              <option value="bodyweight"${ex.type==='bodyweight'?' selected':''}>Body Weight</option>
+              <option value="gym"${ex.type==='gym'?' selected':''}>Gym</option>
+            </select>
+            <select class="inp" id="ed-muscle-${ex.id}" style="margin:0">
+              ${['Ngực','Lưng','Vai','Tay','Chân','Bụng','Toàn thân'].map(m=>`<option${ex.muscle===m?' selected':''}>${m}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn primary sm" style="flex:1" onclick="saveEdit(${ex.id})">Lưu</button>
+            <button class="btn sm" style="flex:1" onclick="state.editingId=null;render()">Huỷ</button>
+          </div></div>`;
+      }
+      html+=`<div class="card-header" onclick="toggleExpand(${ex.id})">
+        <div class="name">${ex.name}</div>
+        <span class="badge ${ex.type==='gym'?'gym':'bw'}">${ex.type==='gym'?'Gym':'BW'}</span>
+        <span class="muscle-tag">${ex.muscle}</span>
+        <div style="display:flex;gap:2px" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="startEdit(${ex.id})">${svgEdit()}</button>
+          <button class="icon-btn danger" onclick="deleteEx(${ex.id})">${svgTrash()}</button>
+        </div>
+        ${expanded?svgDown():svgRight()}
+      </div>`;
+      if(expanded){
+        html+=`<div class="sets-area"><div class="sets-th">
+          <span style="width:22px">Set</span>
+          <span style="flex:1;text-align:center">Reps</span>
+          ${ex.type==='gym'?`<span style="flex:1;text-align:center">Kg</span>`:''}
+          <span style="width:32px"></span>
+        </div>`;
+        ex.sets.forEach((s,i)=>{
+          html+=`<div class="set-row">
+            <span class="set-num">${i+1}</span>
+            <input type="number" inputmode="numeric" class="set-inp" value="${s.reps}" onchange="updateSet(${ex.id},${i},'reps',this.value)"/>
+            <span class="set-x">×</span>
+            ${ex.type==='gym'?`<input type="number" inputmode="decimal" class="set-inp" value="${s.weight}" onchange="updateSet(${ex.id},${i},'weight',this.value)"/>`:`<span style="font-size:12px;color:var(--text3);flex:1;text-align:center">BW</span>`}
+            <button class="icon-btn" style="width:32px;height:32px" onclick="deleteSet(${ex.id},${i})">${svgX()}</button>
+          </div>`;
+        });
+        html+=`<button class="add-set-btn" onclick="addSet(${ex.id})">${svgPlus()} Thêm set</button></div>`;
+      }
+      html+=`</div>`;
+    });
+  }
+  html+=`<button class="btn primary block" style="margin-top:6px" onclick="state.showAddForm=true;render();setTimeout(()=>document.getElementById('new-name')?.focus(),100)">${svgPlus()} Thêm bài tập</button>`;
+  html+=`<button class="btn danger block" onclick="confirmReset()">${svgTrash()} Xoá toàn bộ dữ liệu</button>`;
+  html+=`<button class="btn block" style="color:var(--text3);font-size:12px" onclick="showSetupScreen()">🔌 Đổi kết nối Supabase</button>`;
+  document.getElementById('sec-exercises').innerHTML=html;
+}
+function setFilter(f){state.filterType=f;render();}
+function toggleExpand(id){if(state.expandedIds.has(id))state.expandedIds.delete(id);else state.expandedIds.add(id);render();}
+function startEdit(id){state.editingId=state.editingId===id?null:id;render();}
+function saveEdit(id){
+  const ex=state.exercises.find(e=>e.id===id);
+  const n=document.getElementById('ed-name-'+id)?.value.trim();
+  if(ex&&n){ex.name=n;ex.type=document.getElementById('ed-type-'+id).value;ex.muscle=document.getElementById('ed-muscle-'+id).value;}
+  state.editingId=null;render();save();
+}
+function addExercise(){
+  const name=document.getElementById('new-name')?.value.trim();
+  if(!name)return;
+  const ex={id:state.nextId++,name,type:document.getElementById('new-type').value,muscle:document.getElementById('new-muscle').value,sets:[{reps:10,weight:0},{reps:10,weight:0},{reps:10,weight:0}]};
+  state.exercises.push(ex);state.expandedIds.add(ex.id);state.showAddForm=false;
+  render();save();
+}
+function deleteEx(id){
+  if(!confirm('Xoá bài tập "'+state.exercises.find(e=>e.id===id)?.name+'"?'))return;
+  state.exercises=state.exercises.filter(e=>e.id!==id);state.expandedIds.delete(id);render();save();
+}
+function addSet(id){const ex=state.exercises.find(e=>e.id===id);if(ex)ex.sets.push({reps:10,weight:ex.sets[0]?.weight||0});render();save();}
+function deleteSet(id,i){const ex=state.exercises.find(e=>e.id===id);if(ex&&ex.sets.length>1)ex.sets.splice(i,1);render();save();}
+function updateSet(id,i,f,v){const ex=state.exercises.find(e=>e.id===id);if(ex)ex.sets[i][f]=parseFloat(v)||0;save();}
+async function confirmReset(){
+  if(!confirm('Xoá toàn bộ? Không thể hoàn tác!'))return;
+  state.exercises=JSON.parse(JSON.stringify(DEFAULT_EX));
+  state.logs={};state.nextId=29;
+  render();
+  await save();
+}
+
+/* ===== TODAY TAB — 2 PHASE ===== */
+function renderToday(){
+  const key=todayKey();
+  const log=getLog(key);
+  const d=new Date();
+  const dateStr=`${VN_DAYS[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+
+  if(!state.exercises.length){
+    document.getElementById('sec-today').innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Vào tab Bài tập để thêm bài tập trước nhé!</div>`;
+    return;
+  }
+
+  // PHASE 1: chưa chọn bài hôm nay
+  if(!log.selectedIds){
+    let html=`<div class="phase-header">
+      <div class="phase-label">📅 ${dateStr}</div>
+      <div class="phase-title">Hôm nay tập gì?</div>
+      <div class="phase-sub">Chọn bài tập muốn làm hôm nay</div>
+    </div>`;
+
+    // group by muscle
+    const muscles=[...new Set(state.exercises.map(e=>e.muscle))];
+    muscles.forEach(m=>{
+      const exs=state.exercises.filter(e=>e.muscle===m);
+      html+=`<div class="divider">${m}</div><div class="card">`;
+      exs.forEach(ex=>{
+        const tmpKey='tmp_sel_'+ex.id;
+        html+=`<div class="select-ex-item" onclick="toggleTmpSel(${ex.id})">
+          <div class="sel-box" id="selbox-${ex.id}">${svgCheck()}</div>
+          <div class="sel-info">
+            <div class="sel-name">${ex.name}</div>
+            <div class="sel-sub">${ex.sets.length} sets · <span class="badge ${ex.type==='gym'?'gym':'bw'}" style="font-size:10px">${ex.type==='gym'?'Gym':'BW'}</span></div>
+          </div>
+        </div>`;
+      });
+      html+=`</div>`;
+    });
+
+    html+=`<button class="btn success block" style="margin-top:6px" onclick="confirmSelection()">
+      ${svgCheck()} Bắt đầu tập!
+    </button>`;
+    document.getElementById('sec-today').innerHTML=html;
+    // restore tmp selections from state
+    (state._tmpSel||[]).forEach(id=>{
+      const box=document.getElementById('selbox-'+id);
+      if(box)box.classList.add('checked');
+    });
+    return;
+  }
+
+  // PHASE 2: đã chọn — hiển thị checklist
+  const selIds=log.selectedIds;
+  const selExercises=selIds.map(id=>state.exercises.find(e=>e.id===id)).filter(Boolean);
+  const done=selExercises.filter(ex=>{
+    const sc=log.setChecks[ex.id]||{};
+    return ex.sets.every((_,i)=>sc[i]);
+  }).length;
+  const pct=selExercises.length?Math.round(done/selExercises.length*100):0;
+  const allDone=done===selExercises.length && selExercises.length>0;
+
+  let html=`<div class="phase-header">
+    <div class="phase-label">📅 ${dateStr}</div>
+    <div class="phase-title" style="color:${allDone?'var(--green)':'var(--text)'}">${allDone?'🎉 Hoàn thành buổi tập!':'Đang tập...'}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 2px">
+      <span style="font-size:13px;color:var(--text2)">${done}/${selExercises.length} bài</span>
+      <span style="font-size:13px;font-weight:700;color:${allDone?'var(--green)':'var(--text)'}">${pct}%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+
+  selExercises.forEach(ex=>{
+    const sc=log.setChecks[ex.id]||{};
+    const setsDone=ex.sets.filter((_,i)=>sc[i]).length;
+    const exAllDone=setsDone===ex.sets.length;
+    html+=`<div class="card" style="${exAllDone?'opacity:.55':''}">
+      <div style="padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-weight:700;flex:1;font-size:14px;${exAllDone?'text-decoration:line-through;color:var(--text3)':''}">${ex.name}</span>
+          <span class="badge ${ex.type==='gym'?'gym':'bw'}">${ex.type==='gym'?'Gym':'BW'}</span>
+          <span style="font-size:12px;color:var(--text2)">${setsDone}/${ex.sets.length}</span>
+        </div>
+        ${ex.sets.map((s,i)=>{
+          const checked=!!sc[i];
+          return `<div class="check-item" onclick="toggleSetCheck(${ex.id},${i})">
+            <div class="check-box${checked?' checked':''}">${svgCheck()}</div>
+            <div class="check-label">
+              <div class="cl-name${checked?' done':''}">Set ${i+1}</div>
+              <div class="cl-sub">${s.reps} reps${ex.type==='gym'&&s.weight?` × ${s.weight}kg`:' · bodyweight'}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  html+=`<button class="btn block" style="margin-top:4px;color:var(--text3);font-size:13px" onclick="resetTodaySelection()">
+    ↩ Chọn lại bài tập hôm nay
+  </button>`;
+
+  document.getElementById('sec-today').innerHTML=html;
+}
+
+// Temporary selection state (before confirming)
+function toggleTmpSel(id){
+  if(!state._tmpSel)state._tmpSel=[];
+  const idx=state._tmpSel.indexOf(id);
+  if(idx>=0){state._tmpSel.splice(idx,1);}else{state._tmpSel.push(id);}
+  const box=document.getElementById('selbox-'+id);
+  if(box)box.classList.toggle('checked',state._tmpSel.includes(id));
+}
+function confirmSelection(){
+  if(!state._tmpSel||!state._tmpSel.length){showToast('⚠️ Chọn ít nhất 1 bài!');return;}
+  const key=todayKey();
+  const log=getLog(key);
+  log.selectedIds=state._tmpSel.slice();
+  log.setChecks={};
+  state._tmpSel=[];
+  save();render();
+}
+function resetTodaySelection(){
+  if(!confirm('Chọn lại bài tập hôm nay? Tiến độ tick sẽ bị xoá.'))return;
+  const key=todayKey();
+  const log=getLog(key);
+  log.selectedIds=null;log.setChecks={};
+  state._tmpSel=[];
+  save();render();
+}
+function toggleSetCheck(exId,si){
+  const key=todayKey();const log=getLog(key);
+  if(!log.setChecks[exId])log.setChecks[exId]={};
+  log.setChecks[exId][si]=!log.setChecks[exId][si];
+  renderToday();updateTopBar();save();
+}
+
+/* ===== WEEK TAB ===== */
+function getWeekDates(offset){
+  const now=new Date();const day=now.getDay();
+  const mon=new Date(now);mon.setDate(now.getDate()-day+1+offset*7);
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+function renderWeek(){
+  const days=getWeekDates(state.weekOffset);
+  const todK=todayKey();
+  const f=days[0],l=days[6];
+  let html=`<div class="cal-nav"><h3>${f.getDate()}/${f.getMonth()+1} – ${l.getDate()}/${l.getMonth()+1}</h3>
+    <div class="cal-btns">
+      <button class="cal-btn" onclick="state.weekOffset--;renderWeek()"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="cal-btn" onclick="state.weekOffset++;renderWeek()"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div></div><div class="week-grid">`;
+  const dayLabels=['T2','T3','T4','T5','T6','T7','CN'];
+  days.forEach((d,i)=>{
+    const k=dateKey(d);const log=state.logs[k];
+    const isToday=k===todK,isSel=k===state.selectedDay;
+    const sel=log?.selectedIds||[];
+    const doneCnt=sel.filter(id=>{
+      const ex=state.exercises.find(e=>e.id===id);if(!ex)return false;
+      const sc=log.setChecks[id]||{};return ex.sets.every((_,i)=>sc[i]);
+    }).length;
+    const hasAny=sel.length>0;
+    const dots=hasAny?`<div class="dots">${Array.from({length:Math.min(sel.length,5)},(_,di)=>`<div class="dot" style="background:${di<doneCnt?'var(--green)':'var(--bg3)'}"></div>`).join('')}</div>`:'';
+    html+=`<div class="day-col"><div class="day-lbl">${dayLabels[i]}</div>
+      <div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="state.selectedDay='${k}';renderWeek()">
+        <div class="dn">${d.getDate()}</div>${dots}
+      </div></div>`;
+  });
+  html+=`</div>`;
+  const selKey=state.selectedDay||todayKey();
+  const selLog=state.logs[selKey];
+  const sd=new Date(selKey+'T00:00:00');
+  html+=`<div class="day-detail"><h4>${VN_DAYS[sd.getDay()]}, ${sd.getDate()}/${sd.getMonth()+1}</h4>`;
+  const selIds=selLog?.selectedIds||[];
+  if(!selIds.length){
+    html+=`<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">Không có dữ liệu tập</div>`;
+  } else {
+    html+=selIds.map(id=>{
+      const ex=state.exercises.find(e=>e.id===id);if(!ex)return'';
+      const sc=selLog.setChecks[id]||{};
+      const done=ex.sets.filter((_,i)=>sc[i]).length;
+      return`<div class="detail-item">
+        <span style="font-size:16px">${ex.type==='gym'?'🏋️':'🤸'}</span>
+        <span class="di-name">${ex.name}</span>
+        <span class="di-sets">${done}/${ex.sets.length} sets</span>
+        ${done===ex.sets.length?'<span style="color:var(--green);font-weight:700">✓</span>':''}
+      </div>`;
+    }).filter(Boolean).join('');
+  }
+  html+=`</div>`;
+  document.getElementById('sec-week').innerHTML=html;
+}
+
+/* ===== MONTH TAB ===== */
+function renderMonth(){
+  const now=new Date();
+  const target=new Date(now.getFullYear(),now.getMonth()+state.monthOffset,1);
+  const yr=target.getFullYear(),mo=target.getMonth();
+  const lastDay=new Date(yr,mo+1,0);
+  let workoutDays=0,totalSets=0;
+  for(let d=1;d<=lastDay.getDate();d++){
+    const k=dateKey(new Date(yr,mo,d));const log=state.logs[k];
+    const sel=log?.selectedIds||[];
+    if(sel.length>0)workoutDays++;
+    if(log)Object.values(log.setChecks||{}).forEach(sc=>{totalSets+=Object.values(sc).filter(v=>v).length;});
+  }
+  let html=`<div class="cal-nav"><h3>${VN_MONTHS[mo]} ${yr}</h3>
+    <div class="cal-btns">
+      <button class="cal-btn" onclick="state.monthOffset--;renderMonth()"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="cal-btn" onclick="state.monthOffset++;renderMonth()"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div></div>
+  <div class="stat-row">
+    <div class="stat-card"><div class="sv" style="color:var(--green)">${workoutDays}</div><div class="sl">Ngày tập</div></div>
+    <div class="stat-card"><div class="sv">${lastDay.getDate()-workoutDays}</div><div class="sl">Ngày nghỉ</div></div>
+    <div class="stat-card"><div class="sv" style="color:var(--blue)">${totalSets}</div><div class="sl">Tổng sets</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:5px">
+    ${['CN','T2','T3','T4','T5','T6','T7'].map(d=>`<div style="text-align:center;font-size:10px;color:var(--text3);font-weight:600;padding:2px 0">${d}</div>`).join('')}
+  </div><div class="month-grid">`;
+  const firstDow=(new Date(yr,mo,1).getDay()+6)%7;
+  let cells=Array(firstDow).fill(null);
+  for(let d=1;d<=lastDay.getDate();d++)cells.push(new Date(yr,mo,d));
+  while(cells.length%7)cells.push(null);
+  const todK=todayKey();
+  cells.forEach(d=>{
+    if(!d){html+=`<div class="month-cell empty"></div>`;return;}
+    const k=dateKey(d);const log=state.logs[k];const isToday=k===todK;
+    const sel=log?.selectedIds||[];
+    const doneCnt=sel.filter(id=>{
+      const ex=state.exercises.find(e=>e.id===id);if(!ex)return false;
+      const sc=log.setChecks[id]||{};return ex.sets.every((_,i)=>sc[i]);
+    }).length;
+    const cls=sel.length>0?(doneCnt===sel.length?'full':'workout'):'rest';
+    html+=`<div class="month-cell ${cls}${isToday?' today':''}" onclick="showMonthDay('${k}')">${d.getDate()}</div>`;
+  });
+  html+=`</div><div id="month-day-detail"></div>`;
+  document.getElementById('sec-month').innerHTML=html;
+}
+function showMonthDay(k){
+  const d=new Date(k+'T00:00:00');const log=state.logs[k];
+  const sel=log?.selectedIds||[];
+  let html=`<div class="day-detail"><h4>${VN_DAYS[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}</h4>`;
+  if(!sel.length){
+    html+=`<div style="text-align:center;color:var(--text3);padding:14px;font-size:13px">Không có dữ liệu</div>`;
+  } else {
+    html+=sel.map(id=>{
+      const ex=state.exercises.find(e=>e.id===id);if(!ex)return'';
+      const sc=log.setChecks[id]||{};
+      const done=ex.sets.filter((_,i)=>sc[i]).length;
+      return`<div class="detail-item"><span style="font-size:15px">${ex.type==='gym'?'🏋️':'🤸'}</span><span class="di-name">${ex.name}</span><span class="di-sets">${done}/${ex.sets.length} sets</span>${done===ex.sets.length?'<span style="color:var(--green);font-weight:700">✓</span>':''}</div>`;
+    }).filter(Boolean).join('');
+  }
+  html+=`</div>`;
+  document.getElementById('month-day-detail').innerHTML=html;
+}
+
+loadCfg();init();
+</script>
+</body>
+</html>
